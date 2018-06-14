@@ -1,0 +1,17 @@
+name:                baler
+version:             0.1.0.0
+synopsis:            Minimal binary serialization format
+homepage:            https://github.com/ii8/baler
+license:             ISC
+license-file:        LICENSE
+author:              Murray
+maintainer:          murray.calavera@gmail.com
+category:            Codec
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable baler
+  main-is:             Main.hs
+  other-modules:       Type, Schema, Diag, Bin
+  build-depends:       base, binary, bytestring, mtl, parsec, unordered-containers, utf8-string
+  default-language:    Haskell2010
