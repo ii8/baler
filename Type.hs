@@ -153,5 +153,5 @@ utf8decode (c:cs)
           | r .&. 0xc0 == 0x80 = aux (n-1) rs
                                $ shiftL acc 6 .|. fromEnum (r .&. 0x3f)
 
-        aux _ rs _ = Nothing
+        aux _ _ _ = Nothing
 

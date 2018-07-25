@@ -4,11 +4,20 @@
 A tool for working with [bale](https://github.com/ii8/bale) schemas and data.
 
 ## Installing
+Download one of the binaries from the [releases page](https://github.com/ii8/baler/releases).
 
-The easiest way is to use [Stack](https://docs.haskellstack.org/):
+Example on linux:
+```
+wget https://github.com/ii8/baler/releases/download/v0.1.0/baler-linux-x86_64.gz
+gunzip baler-linux-x86_64.gz
+chmod +x baler-linux-x86_64
+mv baler-linux-x86_64 /usr/local/bin/baler
+```
+
+Or use [stack](https://docs.haskellstack.org/) to build from source:
 ```
 stack build
-sudo stack install --local-bin-path=/usr/local/bin
+stack install
 ```
 
 ## Schema validation
