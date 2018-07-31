@@ -113,36 +113,33 @@ subst args r = case r of
   where
     subst' (a, b) = (a, subst args b)
 
-typep :: Either [String] Arguments -> Parser Raw
-typep names = choice [
+typep :: [String] -> Parser Raw
+typep params = choice [
     keyword "tuple" >> TupleR <$> block,
     keyword "union" >> UnionR <$> block,
-    keyword "array" >> ArrayR <$> typep names,
+    keyword "array" >> ArrayR <$> typep params,
     flip label "a type name" $ do
       n <- word
-      case names of
-        Left params ->
-          if elem n params
-            then ignore1 >> return (NameR n)
-            else beta n
-        Right args -> ignore1 >> return (fromJust $ Map.lookup n args)
+      if elem n params
+        then ignore1 >> return (NameR n)
+        else beta n
     ]
   where
     block = manyTill noted (keyword "end")
-    noted = (,) <$> optionMaybe (try $ annotation) <*> typep names
+    noted = (,) <$> optionMaybe (try $ annotation) <*> typep params
 
     beta n = do
       b <- findBinding n
       case b of
         Nothing -> fail $ "could not find binding of " ++ n
-        Just (params, raw) -> do
+        Just (params', raw) -> do
           ignore1
-          args <- collect params Map.empty
+          args <- collect params' Map.empty
           return $ subst args raw
 
     collect [] m = return m
     collect (p:ps) m = do
-      arg <- typep names
+      arg <- typep params
       collect ps (Map.insert p arg m)
 
 binding :: Parser ()
@@ -154,7 +151,7 @@ binding = do
          fail $ "binding " ++ w ++ " already exists"
     ignore1
     p <- manyTill name (keyword "be")
-    t <- typep (Left p)
+    t <- typep p
     putBinding w (p, t)
   where
     name = lexeme word <?> "a parameter"
@@ -188,7 +185,7 @@ context :: String -> Parser ()
 context path = ignore >> many (include path) >> many binding >> return ()
 
 schema' :: String -> Parser Raw
-schema' path = context path >> typep (Left []) <* eof
+schema' path = context path >> typep [] <* eof
 
 schema :: String -> SourceName -> String -> IO (Either ParseError Raw)
 schema path name input =

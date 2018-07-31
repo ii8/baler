@@ -3,7 +3,6 @@ module Bin (encode, decode) where
 
 import Data.Word
 import Data.Bits
-import Data.Monoid
 import Control.Monad (replicateM)
 import qualified Data.ByteString.Lazy as B
 import Data.Binary.Get
@@ -16,11 +15,11 @@ encodeun v
     | v <= 240 = w8 v
     | v <= 2287 = let v' = v - 240 in w8 ((v' `shiftR` 8) + 241) <> w8 (v' .&. 0xff)
     | v <= 67823 = let v' = v - 2288 in word8 249 <> w8 (v' `shiftR` 8) <> w8 (v' .&. 0xff)
-    | otherwise = words 0 v mempty
+    | otherwise = loop 0 v mempty
   where
-    words :: Word8 -> Word64 -> Builder -> Builder
-    words l 0 b = word8 (247 + l) <> b
-    words l v' b = words (l + 1) (v' `shiftR` 8) (w8 (0xff .&. v') <> b)
+    loop :: Word8 -> Word64 -> Builder -> Builder
+    loop l 0 b = word8 (247 + l) <> b
+    loop l v' b = loop (l + 1) (v' `shiftR` 8) (w8 (0xff .&. v') <> b)
 
     w8 = word8 . fromIntegral
 
@@ -32,11 +31,11 @@ decodeun' a0
         a1 <- getWord8
         a2 <- getWord8
         return $ 2288 + 256 * (fromIntegral a1) + (fromIntegral a2)
-    | otherwise = getBytes (a0 - 247) 0
+    | otherwise = loop (a0 - 247) 0
   where
-    getBytes :: Word8 -> Word64 -> Get Word64
-    getBytes 0 n = return n
-    getBytes l n = getWord8 >>= (\b -> getBytes (l-1) ((n `shiftL` 8) + (fromIntegral b)))
+    loop :: Word8 -> Word64 -> Get Word64
+    loop 0 n = return n
+    loop l n = getWord8 >>= (\b -> loop (l-1) ((n `shiftL` 8) + (fromIntegral b)))
 
 decodeun :: Get Word64
 decodeun = getWord8 >>= decodeun'
